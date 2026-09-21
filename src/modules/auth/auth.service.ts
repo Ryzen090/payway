@@ -15,6 +15,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       picture: user.picture,
+      phone: user.phone,
     };
 
     const accessToken = this.jwtService.sign(payload);
@@ -28,6 +29,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         picture: user.picture,
+        phone: user.phone,
       },
     };
   }

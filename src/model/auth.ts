@@ -4,4 +4,6 @@ export interface AuthUser {
   firstName?: string;
   lastName?: string;
   picture?: string;
+  phone?: string;
 }
+

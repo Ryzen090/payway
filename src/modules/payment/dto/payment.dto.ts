@@ -1,6 +1,5 @@
 import {
   IsArray,
-  IsEmail,
   IsNumber,
   IsOptional,
   IsString,
@@ -23,24 +22,12 @@ export class PaymentItemDTO {
 }
 
 export class PaymentDTO {
+  @IsOptional()
   @IsString()
-  tran_id: string;
+  tran_id?: string;
 
   @IsString()
   amount: string;
-
-  @IsString()
-  firstname: string;
-
-  @IsString()
-  lastname: string;
-
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @IsString()
-  phone: string;
 
   @IsOptional()
   @IsArray()

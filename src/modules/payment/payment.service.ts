@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { AuthUser } from '../../model/auth';
 import { PaymentDTO } from './dto/payment.dto';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
@@ -21,13 +22,14 @@ export class PaymentService {
     this.checkTransaction = `${API_URL}/check-transaction-2`;
   }
 
-  async payment(body: PaymentDTO) {
+  async payment(body: PaymentDTO, user: AuthUser) {
     const reqTime = Math.floor(Date.now() / 1000).toString();
+    const tranId = body.tran_id || Date.now().toString();
 
     const fields = {
       req_time: reqTime,
       merchant_id: this.merchantId,
-      tran_id: body.tran_id,
+      tran_id: tranId,
       amount: body.amount,
 
       items: body.items
@@ -35,10 +37,10 @@ export class PaymentService {
         : '',
 
       shipping: '0',
-      firstname: body.firstname,
-      lastname: body.lastname,
-      email: body.email || '',
-      phone: body.phone,
+      firstname: user?.firstName || '',
+      lastname: user?.lastName || '',
+      email: user?.email || '',
+      phone: user?.phone || '012345678',
       currency: 'USD',
     };
     const stringToHash = Object.values(fields).join('');
@@ -70,7 +72,6 @@ export class PaymentService {
 
     return {
       ...data,
-      tran_id: body.tran_id,
     };
   }
 
