@@ -10,7 +10,7 @@ export class AuthService {
 
   async googleLogin(user: AuthUser): Promise<LoginResponse> {
     const payload = {
-      sub: user.googleId,
+      sub: user._id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -23,7 +23,7 @@ export class AuthService {
       access_token: accessToken,
 
       user: {
-        googleId: user.googleId,
+        _id: user._id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,

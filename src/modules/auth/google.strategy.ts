@@ -22,7 +22,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const email = profile.emails?.[0]?.value;
 
     return {
-      googleId: profile.id,
+      _id: profile.id,
       email,
       firstName: profile.name?.givenName,
       lastName: profile.name?.familyName,
