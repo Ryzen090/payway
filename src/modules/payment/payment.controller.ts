@@ -15,7 +15,7 @@ export class PaymentController {
   }
 
   @Post('check')
-  check(@Body('_id') _id: string) {
-    return this.service.check(_id);
+  check(@Body('tran_id') tran_id: string) {
+    return this.service.check(tran_id);
   }
 }
