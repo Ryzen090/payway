@@ -1,5 +1,5 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { PAYMENT_STATUS } from '../../../common/enums';
 
 export type PaymentDocument = HydratedDocument<Payment>;
@@ -7,7 +7,7 @@ export type PaymentDocument = HydratedDocument<Payment>;
 @Schema({ _id: false })
 export class PaymentItem {
   @Prop({ required: true })
-  zoneId: string;
+  _id: string;
 
   @Prop({ required: true })
   name: string;
@@ -32,18 +32,6 @@ export class Payment {
 
   @Prop({ required: true, index: true })
   userId: string;
-
-  @Prop({ required: true })
-  firstname: string;
-
-  @Prop({ required: true })
-  lastname: string;
-
-  @Prop()
-  email?: string;
-
-  @Prop({ required: true })
-  phone: string;
 
   @Prop({ required: true })
   amount: number;
