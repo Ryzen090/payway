@@ -150,19 +150,5 @@ export class PaymentService {
     );
 
     return response;
-
-    const payment = await this.paymentModel.findOneAndUpdate(
-      { tranId },
-      { $set: { status: updatedStatus } },
-      { returnDocument: 'after' },
-    );
-
-    return {
-      ...response,
-      data: {
-        ...response?.data,
-        payment_status: payment?.status,
-      },
-    };
   }
 }
