@@ -3,7 +3,7 @@ import { Model } from 'mongoose';
 import { AuthUser } from '../../model/auth';
 import { PaymentDTO } from './dto/payment.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { PAYMENT_STATUS } from '../../common/enums';
+import { PAYMENT_STATUS, STATUS } from '../../common/enums';
 import { PaymentDocument } from './entities/payment.schema';
 import { OrderDocument } from '../order/entities/order.schema';
 import { SchemaProvider } from '../../providers/model.providers';
@@ -185,13 +185,34 @@ export class PaymentService {
       currentPayment.status !== PAYMENT_STATUS.SUCCESS
     ) {
       for (const item of currentPayment.items) {
+        const ticket = await this.ticketModel.findOneAndUpdate(
+          {
+            _id: item._id,
+            available: { $gte: item.quantity },
+          },
+          {
+            $inc: {
+              available: -item.quantity,
+            },
+          },
+          {
+            new: true,
+          },
+        );
+
+        if (!ticket) {
+          throw new BadRequestException(
+            `Not enough tickets available for ${item.name}`,
+          );
+        }
+
         await this.ticketModel.updateOne(
           {
             _id: item._id,
           },
           {
-            $inc: {
-              available: -item.quantity,
+            $set: {
+              status: ticket.available > 0 ? STATUS.Active : STATUS.InActive,
             },
           },
         );
