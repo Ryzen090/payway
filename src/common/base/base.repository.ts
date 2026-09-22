@@ -1,5 +1,6 @@
 import { Model } from 'mongoose';
 import * as mongoose from 'mongoose';
+
 import ListResponse from './list.response';
 import { ListQuery, QueryCondition } from './list.query';
 
@@ -12,31 +13,23 @@ export abstract class BaseRepository<TModel extends mongoose.Document> {
 
   async getList(
     query: ListQuery,
-    filters?: QueryCondition,
+    filters: QueryCondition = {},
   ): Promise<ListResponse<TModel>> {
-    query.page = query.page ?? 1;
-    query.pageSize = query.pageSize ?? 10;
-    query.limit = query.limit ?? query.pageSize;
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 10;
+    const limit = query.limit ?? pageSize;
 
-    if (!filters) {
-      filters = {
-        populate: undefined,
-      };
-    }
+    const skip = (page - 1) * limit;
 
-    let sort: any = undefined;
+    const total = await this.model.countDocuments({}).exec();
 
-    let select: any = undefined;
-    const _countQuery = this.model.countDocuments({});
-    const total = await _countQuery.exec();
-    const resultQuery = this.model
+    const result = await this.model
       .find({})
-      .populate(filters?.populate || '')
-      .select(select && select)
-      .sort(sort && sort);
+      .populate(filters.populate || '')
+      .skip(skip)
+      .limit(limit)
+      .exec();
 
-    const result = await resultQuery.exec();
-
-    return new ListResponse(result, total, query.limit);
+    return new ListResponse(result, total, page, pageSize, limit);
   }
 }

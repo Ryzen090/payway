@@ -5,9 +5,17 @@ export default class ListResponse<T> {
   page?: number;
   pageSize?: number;
 
-  constructor(items: T[], total: number, limit?: number) {
+  constructor(
+    items: T[],
+    total: number,
+    page?: number,
+    pageSize?: number,
+    limit?: number,
+  ) {
     this.items = items;
     this.total = total;
+    this.page = page;
+    this.pageSize = pageSize;
     this.limit = limit;
   }
 
@@ -22,8 +30,6 @@ export default class ListResponse<T> {
   }
 
   promise(): Promise<ListResponse<T>> {
-    return new Promise((resolve) => {
-      resolve(this);
-    });
+    return Promise.resolve(this);
   }
 }
