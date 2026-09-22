@@ -78,6 +78,7 @@ export class PaymentService {
     await this.orderModel.create({
       orderId,
       tranId,
+      userId: user._id,
     });
 
     const fields = {

@@ -9,7 +9,7 @@ export class OrderService extends BaseService<OrderDocument, OrderRepository> {
     super(repository);
   }
 
-  async getOrder() {
-    return this.repository.list();
+  async getOrder(userId: string) {
+    return this.repository.list(userId);
   }
 }

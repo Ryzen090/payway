@@ -1,6 +1,7 @@
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+
 import { PAYMENT_STATUS } from '../../common/enums';
 import { OrderDocument } from './entities/order.schema';
 import { SchemaProvider } from '../../providers/model.providers';
@@ -15,33 +16,38 @@ export class OrderRepository extends BaseRepository<OrderDocument> {
     super(orderModel);
   }
 
-  async list() {
+  async list(userId: string) {
     return this.orderModel.aggregate([
+      {
+        $match: {
+          userId,
+        },
+      },
       {
         $lookup: {
           from: 'payments',
           localField: 'tranId',
           foreignField: 'tranId',
-          as: 'paymentDetails',
+          as: 'payment',
         },
       },
       {
-        $unwind: '$paymentDetails',
+        $unwind: '$payment',
       },
       {
         $match: {
-          'paymentDetails.status': PAYMENT_STATUS.SUCCESS,
+          'payment.status': PAYMENT_STATUS.SUCCESS,
+          'payment.userId': userId,
         },
       },
       {
         $project: {
           _id: 1,
-          name: 1,
-          tranId: 1,
           orderId: 1,
-          status: '$paymentDetails.status',
-          amount: '$paymentDetails.amount',
-          items: '$paymentDetails.items',
+          tranId: 1,
+          status: '$payment.status',
+          amount: '$payment.amount',
+          items: '$payment.items',
           createdAt: 1,
         },
       },

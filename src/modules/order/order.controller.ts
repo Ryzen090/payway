@@ -1,6 +1,7 @@
+import { AuthUser } from '../../model/auth';
 import { AuthGuard } from '@nestjs/passport';
 import { OrderService } from './order.service';
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { Success } from '../../common/decorator/response.decorator';
 
 @UseGuards(AuthGuard('jwt'))
@@ -13,7 +14,9 @@ export class OrderController {
 
   @Get()
   @Success()
-  List() {
-    return this.service.getOrder();
+  list(@Req() req: any) {
+    const user = req.user as AuthUser;
+
+    return this.service.getOrder(user._id);
   }
 }
