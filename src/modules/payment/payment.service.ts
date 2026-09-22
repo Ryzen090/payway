@@ -8,7 +8,11 @@ import { PaymentDocument } from './entities/payment.schema';
 import { OrderDocument } from '../order/entities/order.schema';
 import { SchemaProvider } from '../../providers/model.providers';
 import { TicketDocument } from '../ticket/entities/ticket.entity';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
 @Injectable()
 export class PaymentService {
@@ -42,6 +46,25 @@ export class PaymentService {
     const orderId = `ORD-${Date.now()}`;
     const tranId = Date.now().toString();
     const reqTime = Math.floor(Date.now() / 1000).toString();
+
+    const item = body.items?.[0];
+    const ticket = await this.ticketModel.findById(item?._id);
+
+    const available = ticket?.available || 0;
+    const quantity = item?.quantity || 0;
+
+    if (available < quantity) {
+      throw new BadRequestException({
+        message: `Only ${available} tickets are available for ${item?.name}. Please reduce the quantity and try again.`,
+        ticket: {
+          id: ticket?._id,
+          name: ticket?.name,
+          capacity: ticket?.capacity,
+          available: ticket?.available,
+          requested: quantity,
+        },
+      });
+    }
 
     await this.paymentModel.create({
       orderId,
