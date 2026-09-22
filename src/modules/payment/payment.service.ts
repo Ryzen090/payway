@@ -142,9 +142,15 @@ export class PaymentService {
     const remoteStatus = response?.data?.payment_status;
     let updatedStatus: PAYMENT_STATUS = PAYMENT_STATUS.PENDING;
 
-    if (remoteStatus === PAYMENT_STATUS.PENDING) {
+    if (
+      remoteStatus === PAYMENT_STATUS.PENDING ||
+      remoteStatus === PAYMENT_STATUS.SUCCESS
+    ) {
       updatedStatus = PAYMENT_STATUS.SUCCESS;
-    } else if (remoteStatus === PAYMENT_STATUS.FAILED) {
+    } else if (
+      remoteStatus === PAYMENT_STATUS.FAILED ||
+      remoteStatus === 'FAILED'
+    ) {
       updatedStatus = PAYMENT_STATUS.FAILED;
     }
 
@@ -152,7 +158,8 @@ export class PaymentService {
 
     if (
       updatedStatus === PAYMENT_STATUS.SUCCESS &&
-      currentPayment?.status === PAYMENT_STATUS.SUCCESS
+      currentPayment &&
+      currentPayment.status !== PAYMENT_STATUS.SUCCESS
     ) {
       for (const item of currentPayment.items) {
         await this.ticketModel.updateOne(
