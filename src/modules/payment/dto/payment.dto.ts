@@ -23,13 +23,6 @@ export class PaymentItemDTO {
 
 export class PaymentDTO {
   @IsOptional()
-  @IsString()
-  tran_id?: string;
-
-  @IsString()
-  amount: string;
-
-  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => PaymentItemDTO)

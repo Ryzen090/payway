@@ -47,6 +47,25 @@ export class PaymentService {
     const tranId = Date.now().toString();
     const reqTime = Math.floor(Date.now() / 1000).toString();
 
+    if (!body.items || body.items.length === 0) {
+      throw new BadRequestException('Payment items are required');
+    }
+
+    const amount = body.items.reduce((total, item) => {
+      const price = Number(item.price);
+      const quantity = Number(item.quantity);
+
+      if (!Number.isFinite(price) || price <= 0) {
+        throw new BadRequestException(`Invalid price for item ${item.name}`);
+      }
+
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        throw new BadRequestException(`Invalid quantity for item ${item.name}`);
+      }
+
+      return total + price * quantity;
+    }, 0);
+
     const item = body.items?.[0];
     const ticket = await this.ticketModel.findById(item?._id);
 
@@ -70,7 +89,7 @@ export class PaymentService {
       orderId,
       tranId,
       userId: user._id,
-      amount: Number(body.amount),
+      amount,
       status: PAYMENT_STATUS.PENDING,
       items: body.items || [],
     });
@@ -85,7 +104,7 @@ export class PaymentService {
       req_time: reqTime,
       merchant_id: this.merchantId,
       tran_id: tranId,
-      amount: body.amount,
+      amount: amount.toFixed(2),
       items: body.items
         ? Buffer.from(JSON.stringify(body.items)).toString('base64')
         : '',
@@ -176,7 +195,7 @@ export class PaymentService {
     let updatedStatus: PAYMENT_STATUS = PAYMENT_STATUS.PENDING;
 
     if (
-      // remoteStatus === PAYMENT_STATUS.PENDING ||
+      remoteStatus === PAYMENT_STATUS.PENDING ||
       remoteStatus === PAYMENT_STATUS.SUCCESS
     ) {
       updatedStatus = PAYMENT_STATUS.SUCCESS;
@@ -235,7 +254,7 @@ export class PaymentService {
       { returnDocument: 'after' },
     );
 
-    return response;
+    // return response;
 
     return {
       ...response,
