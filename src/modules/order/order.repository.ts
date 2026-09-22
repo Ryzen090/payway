@@ -36,19 +36,58 @@ export class OrderRepository extends BaseRepository<OrderDocument> {
       },
       {
         $match: {
-          'payment.status': PAYMENT_STATUS.SUCCESS,
           'payment.userId': userId,
+          'payment.status': PAYMENT_STATUS.SUCCESS,
+        },
+      },
+      {
+        $unwind: '$payment.items',
+      },
+      {
+        $group: {
+          _id: '$payment.items._id',
+
+          name: {
+            $first: '$payment.items.name',
+          },
+
+          price: {
+            $first: '$payment.items.price',
+          },
+
+          quantity: {
+            $sum: '$payment.items.quantity',
+          },
+
+          totalAmount: {
+            $sum: {
+              $multiply: ['$payment.items.quantity', '$payment.items.price'],
+            },
+          },
+
+          orderIds: {
+            $push: '$orderId',
+          },
+
+          tranIds: {
+            $push: '$tranId',
+          },
+
+          orderCount: {
+            $sum: 1,
+          },
         },
       },
       {
         $project: {
           _id: 1,
-          orderId: 1,
-          tranId: 1,
-          status: '$payment.status',
-          amount: '$payment.amount',
-          items: '$payment.items',
-          createdAt: 1,
+          name: 1,
+          price: 1,
+          quantity: 1,
+          totalAmount: 1,
+          orderIds: 1,
+          tranIds: 1,
+          orderCount: 1,
         },
       },
     ]);
