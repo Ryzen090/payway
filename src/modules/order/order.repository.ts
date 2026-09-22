@@ -38,6 +38,7 @@ export class OrderRepository extends BaseRepository<OrderDocument> {
           _id: 1,
           name: 1,
           tranId: 1,
+          orderId: 1,
           status: '$paymentDetails.status',
           amount: '$paymentDetails.amount',
           items: '$paymentDetails.items',

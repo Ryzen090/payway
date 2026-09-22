@@ -35,7 +35,7 @@ export class PaymentService {
 
   async payment(body: PaymentDTO, user: AuthUser) {
     const orderId = `ORD-${Date.now()}`;
-    const tranId = body.tran_id || Date.now().toString();
+    const tranId = Date.now().toString();
     const reqTime = Math.floor(Date.now() / 1000).toString();
 
     await this.paymentModel.create({
@@ -143,13 +143,19 @@ export class PaymentService {
       updatedStatus = PAYMENT_STATUS.FAILED;
     }
 
-    const payment = await this.paymentModel.findOneAndUpdate(
+    await this.paymentModel.findOneAndUpdate(
       { tranId },
       { $set: { status: updatedStatus } },
       { returnDocument: 'after' },
     );
 
-    // return response;
+    return response;
+
+    const payment = await this.paymentModel.findOneAndUpdate(
+      { tranId },
+      { $set: { status: updatedStatus } },
+      { returnDocument: 'after' },
+    );
 
     return {
       ...response,
