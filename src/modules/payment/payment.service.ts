@@ -4,9 +4,10 @@ import { AuthUser } from '../../model/auth';
 import { PaymentDTO } from './dto/payment.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { PAYMENT_STATUS } from '../../common/enums';
+import { PaymentDocument } from './entities/payment.schema';
 import { OrderDocument } from '../order/entities/order.schema';
 import { SchemaProvider } from '../../providers/model.providers';
-import { Payment, PaymentDocument } from './entities/payment.schema';
+import { TicketDocument } from '../ticket/entities/ticket.entity';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
 @Injectable()
@@ -19,8 +20,12 @@ export class PaymentService {
   constructor(
     @InjectModel(SchemaProvider.PAYMENT)
     private readonly paymentModel: Model<PaymentDocument>,
+
     @InjectModel(SchemaProvider.ORDER)
     private readonly orderModel: Model<OrderDocument>,
+
+    @InjectModel(SchemaProvider.TICKET)
+    private readonly ticketModel: Model<TicketDocument>,
   ) {
     const API_URL = process.env.PAYWAY_URL;
     const API_MERCHANT_ID = process.env.PAYWAY_MERCHANT_ID;
@@ -137,10 +142,30 @@ export class PaymentService {
     const remoteStatus = response?.data?.payment_status;
     let updatedStatus: PAYMENT_STATUS = PAYMENT_STATUS.PENDING;
 
-    if (remoteStatus === PAYMENT_STATUS.SUCCESS) {
+    if (remoteStatus === PAYMENT_STATUS.PENDING) {
       updatedStatus = PAYMENT_STATUS.SUCCESS;
     } else if (remoteStatus === PAYMENT_STATUS.FAILED) {
       updatedStatus = PAYMENT_STATUS.FAILED;
+    }
+
+    const currentPayment = await this.paymentModel.findOne({ tranId });
+
+    if (
+      updatedStatus === PAYMENT_STATUS.SUCCESS &&
+      currentPayment?.status === PAYMENT_STATUS.SUCCESS
+    ) {
+      for (const item of currentPayment.items) {
+        await this.ticketModel.updateOne(
+          {
+            _id: item._id,
+          },
+          {
+            $inc: {
+              available: -item.quantity,
+            },
+          },
+        );
+      }
     }
 
     await this.paymentModel.findOneAndUpdate(
