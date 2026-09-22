@@ -1,3 +1,4 @@
+import type { Request } from 'express';
 import { AuthUser } from '../../model/auth';
 import { AuthGuard } from '@nestjs/passport';
 import { OrderService } from './order.service';
@@ -14,7 +15,7 @@ export class OrderController {
 
   @Get()
   @Success()
-  list(@Req() req: any) {
+  list(@Req() req: Request) {
     const user = req.user as AuthUser;
 
     return this.service.getOrder(user._id);

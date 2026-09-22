@@ -20,7 +20,9 @@ export class PaymentController {
   }
 
   @Post('check')
-  check(@Body('tran_id') tran_id: string) {
-    return this.service.check(tran_id);
+  check(@Body('tran_id') tranId: string, @Req() req: Request) {
+    const user = req.user as AuthUser;
+
+    return this.service.check(tranId, user);
   }
 }

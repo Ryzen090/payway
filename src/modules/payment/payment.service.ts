@@ -132,7 +132,16 @@ export class PaymentService {
     };
   }
 
-  async check(tranId: string) {
+  async check(tranId: string, user: AuthUser) {
+    const userPayment = await this.paymentModel.findOne({
+      tranId,
+      userId: user._id,
+    });
+
+    if (!userPayment) {
+      throw new BadRequestException('Payment not found');
+    }
+
     const reqTime = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
     const stringToHash = `${reqTime}${this.merchantId}${tranId}`;
 
