@@ -6,8 +6,11 @@ export type OrderDocument = HydratedDocument<Order>;
 
 @Schema(BaseSchema)
 export class Order {
-  @Prop({ type: String, required: true })
-  name: string;
+  @Prop({ type: String, required: true, unique: true })
+  orderId: string;
+
+  @Prop({ type: String, required: true, index: true })
+  tranId: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);
