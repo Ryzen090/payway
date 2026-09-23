@@ -69,6 +69,10 @@ export class PaymentService {
     const item = body.items?.[0];
     const ticket = await this.ticketModel.findById(item?._id);
 
+    if (!ticket) {
+      throw new BadRequestException(`Ticket not found`);
+    }
+
     const available = ticket?.available || 0;
     const quantity = item?.quantity || 0;
 
