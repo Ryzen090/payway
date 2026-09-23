@@ -28,7 +28,7 @@ export class AuthController {
     const end = process.env.FRONTEND_URL;
 
     return res.redirect(
-      `${end}/auth/callback?token=${encodeURIComponent(result.access_token)}`,
+      `${end}?token=${encodeURIComponent(result.access_token)}`,
     );
   }
 
