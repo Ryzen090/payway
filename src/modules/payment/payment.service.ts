@@ -94,11 +94,21 @@ export class PaymentService {
       items: body.items || [],
     });
 
-    await this.orderModel.create({
-      orderId,
-      tranId,
-      userId: user._id,
-    });
+    const orders = [];
+
+    for (const item of body.items) {
+      for (let i = 0; i < item.quantity; i++) {
+        const ticketOrderId = `${orderId}-${i + 1}`;
+
+        orders.push({
+          orderId: ticketOrderId,
+          tranId,
+          userId: user._id,
+        });
+      }
+    }
+
+    await this.orderModel.insertMany(orders);
 
     const fields = {
       req_time: reqTime,
@@ -195,7 +205,7 @@ export class PaymentService {
     let updatedStatus: PAYMENT_STATUS = PAYMENT_STATUS.PENDING;
 
     if (
-      remoteStatus === PAYMENT_STATUS.PENDING ||
+      // remoteStatus === PAYMENT_STATUS.PENDING ||
       remoteStatus === PAYMENT_STATUS.SUCCESS
     ) {
       updatedStatus = PAYMENT_STATUS.SUCCESS;
@@ -254,7 +264,7 @@ export class PaymentService {
       { returnDocument: 'after' },
     );
 
-    // return response;
+    return response;
 
     return {
       ...response,

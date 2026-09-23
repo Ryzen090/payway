@@ -56,13 +56,11 @@ export class OrderRepository extends BaseRepository<OrderDocument> {
           },
 
           quantity: {
-            $sum: '$payment.items.quantity',
+            $sum: 1,
           },
 
           totalAmount: {
-            $sum: {
-              $multiply: ['$payment.items.quantity', '$payment.items.price'],
-            },
+            $sum: '$payment.items.price',
           },
 
           orderIds: {
@@ -70,7 +68,7 @@ export class OrderRepository extends BaseRepository<OrderDocument> {
           },
 
           tranIds: {
-            $push: '$tranId',
+            $addToSet: '$tranId',
           },
 
           orderCount: {
