@@ -23,5 +23,6 @@ export class ListQuery {
 }
 
 export interface QueryCondition {
+  condition?: any;
   populate?: any;
 }

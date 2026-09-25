@@ -208,10 +208,7 @@ export class PaymentService {
     const remoteStatus = response?.data?.payment_status;
     let updatedStatus: PAYMENT_STATUS = PAYMENT_STATUS.PENDING;
 
-    if (
-      // remoteStatus === PAYMENT_STATUS.PENDING ||
-      remoteStatus === PAYMENT_STATUS.SUCCESS
-    ) {
+    if (remoteStatus === PAYMENT_STATUS.PENDING) {
       updatedStatus = PAYMENT_STATUS.SUCCESS;
     } else if (
       remoteStatus === PAYMENT_STATUS.FAILED ||
@@ -268,7 +265,7 @@ export class PaymentService {
       { returnDocument: 'after' },
     );
 
-    return response;
+    // return response;
 
     return {
       ...response,

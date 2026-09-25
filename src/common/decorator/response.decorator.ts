@@ -6,3 +6,8 @@ export const Success = (
   message: string = GeneralResponse.Success,
 ): MethodDecorator & ClassDecorator =>
   UseInterceptors(new TransformInterceptor(200, message));
+
+export const Update = (
+  message: string = GeneralResponse.Update,
+): MethodDecorator & ClassDecorator =>
+  UseInterceptors(new TransformInterceptor(204, message));
