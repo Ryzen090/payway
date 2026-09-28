@@ -19,16 +19,67 @@ export class OrderRepository extends BaseRepository<OrderDocument> {
   }
 
   async list(userId: string) {
-    return this.orderModel
-      .find({ userId })
-      .populate({
-        path: 'item',
-        select: '_id name price',
-      })
-      .sort({
-        dateCreated: -1,
-      })
-      .lean();
+    return this.orderModel.aggregate([
+      {
+        $match: {
+          userId,
+          tickets: {
+            $elemMatch: {
+              status: ORDER_STATUS.PENDING,
+            },
+          },
+        },
+      },
+      {
+        $set: {
+          tickets: {
+            $filter: {
+              input: '$tickets',
+              as: 'ticket',
+              cond: {
+                $eq: ['$$ticket.status', ORDER_STATUS.PENDING],
+              },
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'tickets',
+          localField: 'item',
+          foreignField: '_id',
+          as: 'item',
+        },
+      },
+      {
+        $unwind: {
+          path: '$item',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          userId: 1,
+          orderId: 1,
+          tranId: 1,
+          quantity: 1,
+          amount: 1,
+          tickets: 1,
+          dateCreated: 1,
+          item: {
+            _id: '$item._id',
+            name: '$item.name',
+            price: '$item.price',
+          },
+        },
+      },
+      {
+        $sort: {
+          dateCreated: -1,
+        },
+      },
+    ]);
   }
 
   async redeem(code: string) {
