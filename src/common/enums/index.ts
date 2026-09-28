@@ -8,3 +8,8 @@ export enum STATUS {
   InActive = 1,
   Active = 2,
 }
+
+export enum ORDER_STATUS {
+  PENDING = 'PENDING',
+  REDEEMED = 'REDEEMED',
+}

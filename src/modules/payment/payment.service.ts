@@ -3,11 +3,11 @@ import { Model } from 'mongoose';
 import { AuthUser } from '../../model/auth';
 import { PaymentDTO } from './dto/payment.dto';
 import { InjectModel } from '@nestjs/mongoose';
-import { PAYMENT_STATUS, STATUS } from '../../common/enums';
 import { PaymentDocument } from './entities/payment.schema';
 import { OrderDocument } from '../order/entities/order.schema';
 import { SchemaProvider } from '../../providers/model.providers';
 import { TicketDocument } from '../ticket/entities/ticket.entity';
+import { ORDER_STATUS, PAYMENT_STATUS, STATUS } from '../../common/enums';
 import {
   BadRequestException,
   Injectable,
@@ -130,23 +130,19 @@ export class PaymentService {
       items: paymentItems,
     });
 
-    const orders: {
-      orderId: string;
-      tranId: string;
-      userId: string;
-      items: string;
-    }[] = [];
-
-    for (const item of paymentItems) {
-      for (let i = 0; i < item.quantity; i++) {
-        orders.push({
-          orderId: `${orderId}-${orders.length + 1}`,
-          tranId,
-          userId: user._id,
-          items: item._id,
-        });
-      }
-    }
+    let ticketNumber = 0;
+    const orders = paymentItems.map((item) => ({
+      orderId,
+      tranId,
+      userId: user._id,
+      item: item._id,
+      quantity: item.quantity,
+      amount: item.price * item.quantity,
+      tickets: Array.from({ length: item.quantity }, () => ({
+        code: `${orderId}-${++ticketNumber}`,
+        status: ORDER_STATUS.PENDING,
+      })),
+    }));
 
     await this.orderModel.insertMany(orders);
 

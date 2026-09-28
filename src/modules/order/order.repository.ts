@@ -1,5 +1,3 @@
-// order/order.repository.ts
-
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -23,7 +21,7 @@ export class OrderRepository extends BaseRepository<OrderDocument> {
     return this.orderModel
       .find({ userId })
       .populate({
-        path: 'items',
+        path: 'item',
         select: '_id name price',
       })
       .sort({
