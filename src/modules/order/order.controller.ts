@@ -6,7 +6,7 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { OrderService } from './order.service';
 
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Req, UseGuards } from '@nestjs/common';
 
 import { Success } from '../../common/decorator/response.decorator';
 
@@ -24,5 +24,17 @@ export class OrderController {
     const user = req.user as AuthUser;
 
     return this.service.getOrder(user._id);
+  }
+
+  @Patch('scan/:code')
+  @Success()
+  scanSingle(@Param('code') code: string) {
+    return this.service.scan(code);
+  }
+
+  @Patch('all-scan/:orderId')
+  @Success()
+  multipleScan(@Param('orderId') orderId: string) {
+    return this.service.multiple(orderId);
   }
 }

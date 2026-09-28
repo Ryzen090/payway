@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
 import { OrderRepository } from './order.repository';
 
@@ -14,5 +14,21 @@ export class OrderService extends BaseService<OrderDocument, OrderRepository> {
 
   async getOrder(userId: string) {
     return this.repository.list(userId);
+  }
+
+  async scan(code: string) {
+    if (!code?.trim()) {
+      throw new BadRequestException('Ticket QR code is required');
+    }
+
+    return this.repository.redeem(code.trim());
+  }
+
+  async multiple(orderId: string) {
+    if (!orderId?.trim()) {
+      throw new BadRequestException('Order ID is required');
+    }
+
+    return this.repository.multipleScan(orderId.trim());
   }
 }
