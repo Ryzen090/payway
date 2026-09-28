@@ -43,51 +43,83 @@ export class PaymentService {
   }
 
   async payment(body: PaymentDTO, user: AuthUser) {
-    const orderId = `ORD-${Date.now()}`;
-    const tranId = Date.now().toString();
-    const reqTime = Math.floor(Date.now() / 1000).toString();
-
     if (!body.items || body.items.length === 0) {
       throw new BadRequestException('Payment items are required');
     }
 
-    const amount = body.items.reduce((total, item) => {
-      const price = Number(item.price);
+    const ticketIds = body.items.map((item) => item._id);
+
+    if (new Set(ticketIds).size !== ticketIds.length) {
+      throw new BadRequestException('Duplicate ticket items are not allowed');
+    }
+
+    const tickets = await this.ticketModel.find({
+      _id: { $in: ticketIds },
+    });
+
+    if (tickets.length !== ticketIds.length) {
+      throw new BadRequestException('One or more tickets were not found');
+    }
+
+    const ticketMap = new Map(
+      tickets.map((ticket) => [ticket._id.toString(), ticket]),
+    );
+
+    const paymentItems = body.items.map((item) => {
+      const ticket = ticketMap.get(item._id);
+
+      if (!ticket) {
+        throw new BadRequestException(`Ticket ${item._id} not found`);
+      }
+
       const quantity = Number(item.quantity);
 
-      if (!Number.isFinite(price) || price <= 0) {
-        throw new BadRequestException(`Invalid price for item ${item.name}`);
+      if (!Number.isInteger(quantity) || quantity <= 0) {
+        throw new BadRequestException(`Invalid quantity for ${ticket.name}`);
       }
 
-      if (!Number.isFinite(quantity) || quantity <= 0) {
-        throw new BadRequestException(`Invalid quantity for item ${item.name}`);
+      if (ticket.status !== STATUS.Active) {
+        throw new BadRequestException({
+          message: 'Ticket is not active',
+          ticket: {
+            id: ticket._id,
+            name: ticket.name,
+            capacity: ticket.capacity,
+            available: ticket.available,
+            requested: quantity,
+            status: ticket.status,
+          },
+        });
       }
 
-      return total + price * quantity;
+      if (ticket.available < quantity) {
+        throw new BadRequestException({
+          message: `Only ${ticket.available} tickets are available for ${ticket.name}. Please reduce the quantity and try again.`,
+          ticket: {
+            id: ticket._id,
+            name: ticket.name,
+            capacity: ticket.capacity,
+            available: ticket.available,
+            requested: quantity,
+          },
+        });
+      }
+
+      return {
+        _id: ticket._id.toString(),
+        name: ticket.name,
+        quantity,
+        price: Number(ticket.price),
+      };
+    });
+
+    const amount = paymentItems.reduce((total, item) => {
+      return total + item.price * item.quantity;
     }, 0);
 
-    const item = body.items?.[0];
-    const ticket = await this.ticketModel.findById(item?._id);
-
-    if (!ticket) {
-      throw new BadRequestException(`Ticket not found`);
-    }
-
-    const available = ticket?.available || 0;
-    const quantity = item?.quantity || 0;
-
-    if (available < quantity) {
-      throw new BadRequestException({
-        message: `Only ${available} tickets are available for ${item?.name}. Please reduce the quantity and try again.`,
-        ticket: {
-          id: ticket?._id,
-          name: ticket?.name,
-          capacity: ticket?.capacity,
-          available: ticket?.available,
-          requested: quantity,
-        },
-      });
-    }
+    const orderId = `ORD-${Date.now()}`;
+    const tranId = Date.now().toString();
+    const reqTime = Math.floor(Date.now() / 1000).toString();
 
     await this.paymentModel.create({
       orderId,
@@ -95,19 +127,23 @@ export class PaymentService {
       userId: user._id,
       amount,
       status: PAYMENT_STATUS.PENDING,
-      items: body.items || [],
+      items: paymentItems,
     });
 
-    const orders = [];
+    const orders: {
+      orderId: string;
+      tranId: string;
+      userId: string;
+      items: string;
+    }[] = [];
 
-    for (const item of body.items) {
+    for (const item of paymentItems) {
       for (let i = 0; i < item.quantity; i++) {
-        const ticketOrderId = `${orderId}-${i + 1}`;
-
         orders.push({
-          orderId: ticketOrderId,
+          orderId: `${orderId}-${orders.length + 1}`,
           tranId,
           userId: user._id,
+          items: item._id,
         });
       }
     }
@@ -119,9 +155,7 @@ export class PaymentService {
       merchant_id: this.merchantId,
       tran_id: tranId,
       amount: amount.toFixed(2),
-      items: body.items
-        ? Buffer.from(JSON.stringify(body.items)).toString('base64')
-        : '',
+      items: Buffer.from(JSON.stringify(paymentItems)).toString('base64'),
       shipping: '0',
       firstname: user?.firstName || '',
       lastname: user?.lastName || '',
@@ -131,6 +165,7 @@ export class PaymentService {
     };
 
     const stringToHash = Object.values(fields).join('');
+
     const hash = crypto
       .createHmac('sha512', this.publicKey)
       .update(stringToHash)

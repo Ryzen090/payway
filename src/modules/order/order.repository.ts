@@ -1,10 +1,13 @@
+// order/order.repository.ts
+
 import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { PAYMENT_STATUS } from '../../common/enums';
 import { OrderDocument } from './entities/order.schema';
+
 import { SchemaProvider } from '../../providers/model.providers';
+
 import { BaseRepository } from '../../common/base/base.repository';
 
 @Injectable()
@@ -17,77 +20,15 @@ export class OrderRepository extends BaseRepository<OrderDocument> {
   }
 
   async list(userId: string) {
-    return this.orderModel.aggregate([
-      {
-        $match: {
-          userId,
-        },
-      },
-      {
-        $lookup: {
-          from: 'payments',
-          localField: 'tranId',
-          foreignField: 'tranId',
-          as: 'payment',
-        },
-      },
-      {
-        $unwind: '$payment',
-      },
-      {
-        $match: {
-          'payment.userId': userId,
-          'payment.status': PAYMENT_STATUS.SUCCESS,
-        },
-      },
-      {
-        $unwind: '$payment.items',
-      },
-      {
-        $group: {
-          _id: '$payment.items._id',
-
-          name: {
-            $first: '$payment.items.name',
-          },
-
-          price: {
-            $first: '$payment.items.price',
-          },
-
-          quantity: {
-            $sum: 1,
-          },
-
-          totalAmount: {
-            $sum: '$payment.items.price',
-          },
-
-          orderIds: {
-            $push: '$orderId',
-          },
-
-          tranIds: {
-            $addToSet: '$tranId',
-          },
-
-          orderCount: {
-            $sum: 1,
-          },
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          price: 1,
-          quantity: 1,
-          totalAmount: 1,
-          orderIds: 1,
-          tranIds: 1,
-          orderCount: 1,
-        },
-      },
-    ]);
+    return this.orderModel
+      .find({ userId })
+      .populate({
+        path: 'items',
+        select: '_id name price',
+      })
+      .sort({
+        dateCreated: -1,
+      })
+      .lean();
   }
 }
